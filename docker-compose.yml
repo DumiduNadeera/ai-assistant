@@ -1,0 +1,62 @@
+name: orysys-enterprise-assistant
+
+services:
+  api:
+    build:
+      context: .
+      target: api
+    environment:
+      APP_ENV: container
+      API_HOST: 0.0.0.0
+      API_PORT: "8000"
+      LANGCHAIN_API_KEY: "${LANGCHAIN_API_KEY:-}"
+      LANGCHAIN_PROJECT: "${LANGCHAIN_PROJECT:-orysys-enterprise-assistant}"
+      LANGCHAIN_TRACING_V2: "${LANGCHAIN_TRACING_V2:-false}"
+      PINECONE_API_KEY: "${PINECONE_API_KEY:-}"
+      PINECONE_INDEX: "${PINECONE_INDEX:-}"
+      PINECONE_NAMESPACE: "${PINECONE_NAMESPACE:-enterprise-demo}"
+      LLM_PROVIDER: "${LLM_PROVIDER:-deterministic}"
+      LLM_MODEL: "${LLM_MODEL:-gpt-5-mini}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      EMBEDDING_MODEL: "${EMBEDDING_MODEL:-text-embedding-3-small}"
+      EMBEDDING_DIMENSIONS: "${EMBEDDING_DIMENSIONS:-1536}"
+      RATE_LIMIT_CAPACITY: "${RATE_LIMIT_CAPACITY:-20}"
+      RATE_LIMIT_REFILL_PER_SECOND: "${RATE_LIMIT_REFILL_PER_SECOND:-0.2}"
+    ports:
+      - "${API_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      target: frontend
+    environment:
+      API_BASE_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${STREAMLIT_PORT:-8501}:8501"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
