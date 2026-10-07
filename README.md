@@ -42,6 +42,8 @@ The Streamlit sidebar applies these automatically. Use **Show agent activity** t
 
 ## Runtime architecture
 
+![Enterprise AI Assistant system architecture](docs/diagrams/system-architecture.png)
+
 ```text
 request → authentication → token bucket → LangGraph
         → input guard → memory → supervisor
@@ -170,4 +172,3 @@ CI runs linting, typing, tests with branch coverage, Compose validation, contain
 - The offline dense fallback is suitable for repeatable development, while production-quality semantic retrieval requires configured embeddings and a matching Pinecone index.
 - The RLM workflow recursively refines searches from accumulated evidence and is bounded by `MAX_RLM_DEPTH`, subquery, document, concurrency, and request-deadline limits.
 - All MCP and analysis capabilities are read-only. No arbitrary Python supplied by users or documents is executed.
-- Publishing the repository, LangSmith trace URL, and 45-minute demo remains an owner-operated external step.

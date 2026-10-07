@@ -2,6 +2,8 @@
 
 The system is a modular monolith. One policy boundary owns authentication, graph orchestration, retrieval, tools, validation, and observable events. External providers sit behind adapters so the credential-free development profile and Pinecone/OpenAI/LangSmith integration profile use the same graph.
 
+![Enterprise AI Assistant system architecture](docs/diagrams/system-architecture.png)
+
 ## Component view
 
 ```mermaid
