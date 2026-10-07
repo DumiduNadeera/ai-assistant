@@ -8,7 +8,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     HOME=/tmp
 
-WORKDIR /opt/orysys
+WORKDIR /opt/enterprise-ai-assistant
 
 RUN groupadd --gid 10001 app \
     && useradd --uid 10001 --gid app --no-create-home --shell /usr/sbin/nologin app
@@ -30,4 +30,3 @@ CMD ["python", "-m", "uvicorn", "app.api:app", "--host", "0.0.0.0", "--port", "8
 FROM runtime AS frontend
 EXPOSE 8501
 CMD ["python", "-m", "streamlit", "run", "frontend/streamlit_app.py", "--server.address=0.0.0.0", "--server.port=8501", "--server.headless=true"]
-

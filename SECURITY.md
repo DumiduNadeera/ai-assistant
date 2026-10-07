@@ -1,6 +1,6 @@
 # Security Model
 
-This repository contains a public assessment POC with synthetic data. Demo tokens are public fixtures and must never protect real information.
+This repository contains a public portfolio project with synthetic data. Demo tokens are public fixtures and must never protect real information.
 
 ## Enforced controls
 

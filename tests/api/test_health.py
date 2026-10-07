@@ -10,7 +10,7 @@ async def test_health_contract_is_public(client: httpx.AsyncClient) -> None:
 
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
-    assert response.json()["service"] == "orysys-enterprise-assistant"
+    assert response.json()["service"] == "enterprise-ai-assistant"
     assert response.json()["version"] == "0.2.0"
 
 

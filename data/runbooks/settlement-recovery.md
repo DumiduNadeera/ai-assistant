@@ -17,7 +17,7 @@ Use this runbook when settlement queue age exceeds 15 minutes, settlement throug
 - Scaling beyond the normal worker maximum requires Payments Platform approval.
 - Query-plan changes require Database Engineering approval.
 
-## Initial Assessment
+## Initial Triage
 
 Record queue depth, oldest-message age, arrival rate, completion rate, estimated drain time, worker count, worker utilization, database latency, lock waits, replication lag, and downstream response time.
 

@@ -1,8 +1,8 @@
-# Orysys AI Assistant
+# Enterprise AI Assistant
 
-A secure and observable enterprise knowledge assistant built for the Orysys AI Lead assessment. The POC combines a streaming Streamlit interface, async FastAPI API, typed LangGraph workflow, bounded research/RLM path, hybrid retrieval, Pinecone integration, session memory, deterministic RBAC, security guardrails, MCP tools, Python analysis, and LangSmith tracing.
+A secure and observable enterprise knowledge and operations assistant built as a portfolio-ready AI engineering project. The system combines a streaming Streamlit interface, async FastAPI API, typed LangGraph workflow, bounded recursive research, hybrid retrieval, Pinecone integration, session memory, deterministic RBAC, security guardrails, MCP tools, Python analysis, local LLM support, and LangSmith tracing.
 
-The complete design and assignment traceability are in [CONTEXT_PROJECT_DESIGN.md](CONTEXT_PROJECT_DESIGN.md).
+The complete architecture, requirement mapping, and engineering decisions are in [CONTEXT_PROJECT_DESIGN.md](CONTEXT_PROJECT_DESIGN.md).
 
 ## Quick start
 
@@ -96,7 +96,7 @@ PINECONE_NAMESPACE=enterprise-demo
 
 LANGSMITH_TRACING=true
 LANGSMITH_API_KEY=...
-LANGSMITH_PROJECT=orysys-enterprise-assistant
+LANGSMITH_PROJECT=enterprise-ai-assistant
 LANGSMITH_ENDPOINT=https://api.smith.langchain.com
 # LANGSMITH_WORKSPACE_ID=...  # only for keys scoped to multiple workspaces
 
@@ -166,8 +166,8 @@ CI runs linting, typing, tests with branch coverage, Compose validation, contain
 ## Current boundaries
 
 - Session memory, token buckets, and local indexes are process-local; Compose intentionally runs one API worker.
-- Hardcoded identities are permitted by the assessment and must be replaced by OIDC/JWT for real use.
-- The offline dense fallback is suitable for repeatable development, while assessment-quality semantic retrieval requires configured embeddings and a matching Pinecone index.
+- Hardcoded identities keep the local demonstration repeatable and must be replaced by OIDC/JWT for real use.
+- The offline dense fallback is suitable for repeatable development, while production-quality semantic retrieval requires configured embeddings and a matching Pinecone index.
 - The RLM workflow recursively refines searches from accumulated evidence and is bounded by `MAX_RLM_DEPTH`, subquery, document, concurrency, and request-deadline limits.
 - All MCP and analysis capabilities are read-only. No arbitrary Python supplied by users or documents is executed.
 - Publishing the repository, LangSmith trace URL, and 45-minute demo remains an owner-operated external step.

@@ -3,9 +3,9 @@ requires = ["setuptools>=75"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "orysys-enterprise-ai-assistant"
+name = "enterprise-ai-assistant"
 version = "0.2.0"
-description = "Secure, observable enterprise knowledge assistant assessment project"
+description = "Secure and observable enterprise knowledge and operations assistant"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

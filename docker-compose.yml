@@ -1,4 +1,4 @@
-name: orysys-enterprise-assistant
+name: enterprise-ai-assistant
 
 services:
   api:
@@ -10,7 +10,7 @@ services:
       API_HOST: 0.0.0.0
       API_PORT: "8000"
       LANGSMITH_API_KEY: "${LANGSMITH_API_KEY:-}"
-      LANGSMITH_PROJECT: "${LANGSMITH_PROJECT:-orysys-enterprise-assistant}"
+      LANGSMITH_PROJECT: "${LANGSMITH_PROJECT:-enterprise-ai-assistant}"
       LANGSMITH_TRACING: "${LANGSMITH_TRACING:-false}"
       LANGSMITH_ENDPOINT: "${LANGSMITH_ENDPOINT:-https://api.smith.langchain.com}"
       LANGSMITH_WORKSPACE_ID: "${LANGSMITH_WORKSPACE_ID:-}"

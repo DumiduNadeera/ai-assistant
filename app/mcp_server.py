@@ -1,8 +1,8 @@
-"""Standalone MCP server exposing only dummy assessment data."""
+"""Standalone MCP server exposing synthetic enterprise data."""
 from mcp.server.fastmcp import FastMCP
 from app.tools import ENTERPRISE_DATA
 
-mcp = FastMCP("orysys-enterprise-demo")
+mcp = FastMCP("enterprise-ai-assistant-demo")
 
 
 @mcp.tool()
@@ -20,7 +20,7 @@ def search_employee_directory(team: str = "") -> list[dict]:
 
 @mcp.tool()
 def get_incident_records() -> list[dict]:
-    """Return dummy incident summaries for the assessment environment."""
+    """Return synthetic incident summaries for the demonstration environment."""
     return ENTERPRISE_DATA["incident_records"]
 
 

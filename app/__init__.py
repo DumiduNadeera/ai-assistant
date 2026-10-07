@@ -1,4 +1,4 @@
-"""Orysys enterprise AI assistant."""
+"""Enterprise AI assistant."""
 import asyncio
 import sys
 

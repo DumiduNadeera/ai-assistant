@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "Orysys AI Assistant"
+    app_name: str = "Enterprise AI Assistant"
     app_env: str = "development"
     api_host: str = "0.0.0.0"
     api_port: int = 8000
@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     # Backward compatibility for deployments using the former variable names.
     langchain_tracing_v2: bool = False
     langchain_api_key: str = ""
-    langchain_project: str = "orysys-enterprise-assistant"
+    langchain_project: str = "enterprise-ai-assistant"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

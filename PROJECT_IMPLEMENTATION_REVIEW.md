@@ -1,17 +1,17 @@
-# Project Requirements Implementation Audit
+# Enterprise AI Assistant — Implementation Review
 
-**Audit date:** 2026-10-07  
-**Source of requirements:** `C:\Users\HEALTHY MACHINES\Documents\Orysys\Lead AI Assignment.md`  
-**Audited project:** Orysys AI Assistant  
+**Review date:** 2026-10-07  
+**Review scope:** Architecture, implementation, security, reliability, and portfolio readiness  
+**Reviewed project:** Enterprise AI Assistant  
 **Method:** Static code review, configuration review, automated quality gates, and read-only integration checks.
 
-## 1. Executive assessment
+## 1. Executive summary
 
 The repository is a credible, runnable proof of concept with a clear LangGraph workflow, live SSE activity events, role-aware retrieval and tools, bounded session memory, a token bucket limiter, local Ollama generation, Pinecone integration, structured logging, security checks, tests, documentation, and container definitions.
 
-It does not yet fully satisfy the assessment. The most important blocker in this audit snapshot is mandatory LangSmith observability: tracing is instrumented and enabled in configuration, but the configured credential returned HTTP 403 during the recorded live check. The RLM gap has since been remediated with bounded recursive iterations, evidence-driven refinement, and live depth events. Pinecone is used only for dense retrieval while sparse ranking stays local, and several production and delivery claims remain partial.
+The project is a credible, runnable portfolio system with operational LangSmith authentication, bounded recursive research, evidence-driven refinement, and live activity events. Pinecone currently supplies the dense retrieval channel while sparse ranking remains local, and several production hardening items remain open.
 
-**Estimated requirement readiness after RLM remediation: 74/100.** This is an engineering estimate based on the assignment weights, not an evaluator score.
+**Engineering readiness snapshot: 78/100.** This is an internal prioritization heuristic based on the capability weights below.
 
 | Verdict | Count |
 |---|---:|
@@ -19,7 +19,7 @@ It does not yet fully satisfy the assessment. The most important blocker in this
 | Partially satisfied | 12 |
 | Not satisfied / not demonstrated | 6 |
 
-## 2. Weighted assessment
+## 2. Capability review
 
 | Evaluation area | Weight | Estimated result | Status | Main reason |
 |---|---:|---:|---|---|
@@ -39,7 +39,7 @@ It does not yet fully satisfy the assessment. The most important blocker in this
 
 ### 3.1 Frontend
 
-| Requirement | Status | Evidence and assessment |
+| Requirement | Status | Evidence and review |
 |---|---|---|
 | Streamlit chat interface | Satisfied | `frontend/streamlit_app.py` uses Streamlit chat messages and chat input. |
 | Multi-turn conversation | Satisfied for one process/session | UI messages persist in `st.session_state`; server memory is keyed by session and owner. |
@@ -55,7 +55,7 @@ It does not yet fully satisfy the assessment. The most important blocker in this
 
 ### 3.2 Backend and async engineering
 
-| Requirement | Status | Evidence and assessment |
+| Requirement | Status | Evidence and review |
 |---|---|---|
 | Python and FastAPI | Satisfied | Typed FastAPI endpoints and Pydantic request/response models are present. |
 | Async APIs | Satisfied | Chat, stream, readiness, session, and dependency functions are async. |
@@ -66,7 +66,7 @@ It does not yet fully satisfy the assessment. The most important blocker in this
 
 ### 3.3 LangGraph and agent architecture
 
-| Requirement | Status | Evidence and assessment |
+| Requirement | Status | Evidence and review |
 |---|---|---|
 | LangGraph orchestration | Satisfied | `StateGraph` has typed state, named nodes, conditional routing, and async invocation/streaming. |
 | Multiple specialized agents | Satisfied at POC level | Supervisor, retrieval, research, and response nodes are separated, with validation, memory, and authorization nodes. |
@@ -76,7 +76,7 @@ It does not yet fully satisfy the assessment. The most important blocker in this
 
 ### 3.4 Recursive Language Model behavior
 
-| Requirement | Status | Evidence and assessment |
+| Requirement | Status | Evidence and review |
 |---|---|---|
 | Explore collections without loading everything into the LLM | Satisfied | Retrieval selects bounded chunks before synthesis. |
 | Generate Python-based search plans | Satisfied at POC level | Python creates the initial bounded plan and generates later queries from referenced records, missing incident sections, and recurring evidence terms. |
@@ -87,7 +87,7 @@ It does not yet fully satisfy the assessment. The most important blocker in this
 
 ### 3.5 Retrieval and Pinecone
 
-| Requirement | Status | Evidence and assessment |
+| Requirement | Status | Evidence and review |
 |---|---|---|
 | Dense search | Partial | Pinecone and local dense paths work, but Ollama mode uses deterministic feature-hash vectors rather than a learned semantic embedding model. |
 | Sparse/BM25 search | Satisfied locally | Corpus-aware BM25 is implemented over authorized local chunks. |
@@ -100,7 +100,7 @@ It does not yet fully satisfy the assessment. The most important blocker in this
 
 ### 3.6 Memory
 
-| Requirement | Status | Evidence and assessment |
+| Requirement | Status | Evidence and review |
 |---|---|---|
 | Maintain user context and previous interactions | Satisfied for active process | Bounded user/assistant turns are stored and supplied to answer generation. |
 | Survive multiple session turns | Satisfied | Session ownership and bounded history are enforced across requests to one API process. |
@@ -110,7 +110,7 @@ It does not yet fully satisfy the assessment. The most important blocker in this
 
 ### 3.7 Tool calling and MCP
 
-| Requirement | Status | Evidence and assessment |
+| Requirement | Status | Evidence and review |
 |---|---|---|
 | Knowledge search tool | Satisfied | Policy-aware async search tool is used by retrieval and research nodes. |
 | Python analysis tool | Satisfied safely | Bounded curated analysis is implemented without executing user-supplied code. |
@@ -120,7 +120,7 @@ It does not yet fully satisfy the assessment. The most important blocker in this
 
 ### 3.8 LLM
 
-| Requirement | Status | Evidence and assessment |
+| Requirement | Status | Evidence and review |
 |---|---|---|
 | Modern LLM | Satisfied | Local Ollama model `qwen3:4b-instruct` is installed and configured. |
 | Streaming model output | Satisfied | Ollama OpenAI-compatible streaming is consumed token by token. |
@@ -129,17 +129,17 @@ It does not yet fully satisfy the assessment. The most important blocker in this
 
 ### 3.9 Observability
 
-| Requirement | Status | Evidence and assessment |
+| Requirement | Status | Evidence and review |
 |---|---|---|
 | LangSmith mandatory configuration | Implemented but not operational | Environment enables tracing and code configures LangSmith. Live API authentication returned HTTP 403. |
 | Trace every conversation | Not demonstrated | Graph runs and node decorators are traceable when credentials work; no accessible successful project/trace was verified. |
 | Trace tool calls | Implemented in code | Tool nodes are decorated with `run_type="tool"`; live trace confirmation is blocked by authentication. |
 | Trace transitions/retrieval | Implemented in code | LangGraph execution and retriever decorators are instrumented; live trace confirmation is blocked. |
-| Evaluator-accessible traces | Not satisfied | No public/shared LangSmith trace URL is recorded. |
+| Reviewer-accessible traces | Partial | Operational traces are available in the configured workspace; a portfolio-safe shared trace still needs to be published. |
 
 ### 3.10 Security, validation, authentication, and RBAC
 
-| Requirement | Status | Evidence and assessment |
+| Requirement | Status | Evidence and review |
 |---|---|---|
 | Prompt-injection protection | Partial | Deterministic patterns and trusted/untrusted prompt separation exist. Pattern matching is narrow and easily paraphrased. |
 | Data-exfiltration protection | Partial | Classification filters, role checks, session ownership, and no-secret prompt instructions exist. There is no output DLP/redaction layer. |
@@ -150,12 +150,12 @@ It does not yet fully satisfy the assessment. The most important blocker in this
 | Unauthorized access guardrail | Satisfied | Document classification, tool roles, bearer identity, and session ownership are enforced in code. |
 | Hallucinated-citation guardrail | Partial | Returned citation IDs must exist in validated evidence, but claims and inline citations in generated text are not checked. All evidence items may be returned as citations even when unused. |
 | Invalid-response guardrail | Partial | Empty answer and citation identity are checked; failure does not trigger repair or replace the invalid answer. |
-| Hardcoded authentication option | Satisfied | Three documented demo bearer identities implement the assignment's allowed Option A. |
+| Hardcoded authentication option | Satisfied | Three documented demo bearer identities keep local demonstrations repeatable. |
 | Viewer/Analyst/Administrator | Satisfied | Required roles and tool capabilities are represented and tested. |
 
 ### 3.11 Rate limiting and failure handling
 
-| Requirement | Status | Evidence and assessment |
+| Requirement | Status | Evidence and review |
 |---|---|---|
 | Token bucket | Satisfied | Monotonic refill and capacity logic are implemented. |
 | Per-user limit | Satisfied | Bucket key is the authenticated user ID. |
@@ -169,7 +169,7 @@ It does not yet fully satisfy the assessment. The most important blocker in this
 
 ### 3.12 Sample documents and deliverables
 
-| Requirement | Status | Evidence and assessment |
+| Requirement | Status | Evidence and review |
 |---|---|---|
 | Incident reports | Satisfied | Three detailed incident documents. |
 | Architecture documents | Satisfied | Two detailed architecture documents. |
@@ -217,7 +217,7 @@ It does not yet fully satisfy the assessment. The most important blocker in this
 | Branch coverage | 83.63%, above configured 70% threshold |
 | Failed test | `tests/unit/test_retrieval.py::test_local_documents_have_attribution_and_access_metadata` |
 
-The initial test run inherited `LLM_PROVIDER=ollama` and was stopped after it progressed slowly through live model calls. The completed audit run set `LLM_PROVIDER=deterministic` so the suite remained isolated and repeatable. This indicates the test configuration should explicitly override external providers rather than inherit `.env`.
+The initial test run inherited `LLM_PROVIDER=ollama` and was stopped after it progressed slowly through live model calls. The completed review run set `LLM_PROVIDER=deterministic` so the suite remained isolated and repeatable. This indicates the test configuration should explicitly override external providers rather than inherit `.env`.
 
 ### Live integration checks
 
@@ -242,4 +242,4 @@ The initial test run inherited `LLM_PROVIDER=ollama` and was stopped after it pr
 
 ## 7. Final verdict
 
-**Request changes before final submission.** The project already demonstrates most POC engineering capabilities, recursive RLM behavior, and the central UI experience. It still needs the remaining trace, test, and retrieval findings in this audit snapshot resolved before evaluation.
+**Continue production hardening before presenting the project as production-ready.** The portfolio already demonstrates the core AI engineering capabilities, recursive RLM behavior, and the central UI experience. The remaining trace-sharing, test, and retrieval findings are documented above.

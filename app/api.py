@@ -32,7 +32,7 @@ async def session_access_denied(_: Request, exc: SessionAccessDenied) -> JSONRes
 
 @app.get("/api/v1/health")
 async def health() -> dict:
-    return {"status": "ok", "service": "orysys-enterprise-assistant", "version": app.version}
+    return {"status": "ok", "service": "enterprise-ai-assistant", "version": app.version}
 
 
 @app.get("/api/v1/ready")

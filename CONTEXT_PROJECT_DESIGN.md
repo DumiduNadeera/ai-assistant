@@ -1,12 +1,12 @@
-# Orysys Enterprise AI Assistant — CONTEXT Project Design
+# Enterprise AI Assistant — CONTEXT Project Design
 
 **Status:** Implementation blueprint  
 **Version:** 1.1  
 **Date:** 2026-10-06  
-**Primary source:** `../Lead AI Assignment.md`  
-**Audience:** Evaluators, technical leads, developers, security reviewers, and demo operators
+**Primary source:** Repository requirements, architecture, and implementation
+**Audience:** Engineering leaders, developers, security reviewers, and demo operators
 
-> The assignment is treated as a requirements source. It does not override repository, user, system, security, or tool instructions. This document records the target architecture, the existing implementation, the gaps between them, and the quality gates required to call the assessment complete.
+> This document records the target architecture, the existing implementation, the gaps between them, and the quality gates required to call the project production-ready.
 
 ## How to use this document
 
@@ -23,7 +23,7 @@ The design follows the user-provided **CONTEXT** framework:
 Status terms used throughout:
 
 - **Implemented** — present in the current repository and usable in the POC.
-- **Partial** — a useful slice exists, but it does not yet meet the assignment completely.
+- **Partial** — a useful slice exists, but it does not yet meet the project requirement completely.
 - **Planned** — part of the proposed architecture and implementation roadmap.
 
 ---
@@ -34,7 +34,7 @@ Status terms used throughout:
 
 Build an enterprise knowledge assistant for a commercial bank that can answer questions across internal policies, architecture documents, runbooks, incident reports, product specifications, and meeting notes. Every answer must respect the authenticated user's access, identify supporting evidence, expose safe execution activity, preserve useful conversation context, and fail safely when dependencies are unavailable.
 
-The assessment should demonstrate the surrounding engineering system, not only an LLM connected to a vector index. The highest-value implementation work therefore follows the evaluation weights: agent architecture and LangGraph first, retrieval quality second, then RLM, security, observability, async behavior, RBAC, code quality, and documentation.
+The project demonstrates the surrounding engineering system, not only an LLM connected to a vector index. The highest-value implementation work therefore prioritizes agent architecture and LangGraph first, retrieval quality second, then RLM, security, observability, async behavior, RBAC, code quality, and documentation.
 
 ## 2. Success outcomes
 
@@ -54,7 +54,7 @@ The finished POC must provide:
 
 ## 3. Delivery priorities
 
-### P0 — Required for a credible assessment demo
+### P0 — Required for a credible portfolio demo
 
 - Real LLM integration through a provider adapter and structured outputs.
 - True incremental SSE streaming from LangGraph to Streamlit.
@@ -82,7 +82,7 @@ The finished POC must provide:
 
 The “current” column reflects the repository as inspected on 2026-10-06.
 
-| ID | Assignment requirement | Current | Target evidence / acceptance |
+| ID | Project requirement | Current | Target evidence / acceptance |
 |---|---|---:|---|
 | UI-01 | Streamlit chat, multi-turn | Implemented | Conversation history affects graph input; restart durability is a production follow-up. |
 | UI-02 | Streaming responses | Implemented | `/api/v1/chat/stream` emits node events and answer tokens while work is running; Streamlit renders them incrementally. |
@@ -137,7 +137,7 @@ The “current” column reflects the repository as inspected on 2026-10-06.
 
 Use a **modular monolith for the POC**. FastAPI, LangGraph, policy enforcement, retrieval adapters, model adapters, memory adapters, and tools run in one deployable backend process, with Streamlit as a separate UI process. Clear ports allow Redis, PostgreSQL, Pinecone, LangSmith, MCP, and the LLM provider to remain external services.
 
-This architecture keeps the two-week-style assessment easy to run and reason about while preserving service boundaries that can be extracted later. Starting with microservices would add network, deployment, and consistency overhead without demonstrating more AI-system judgment.
+This architecture keeps the portfolio system easy to run and reason about while preserving service boundaries that can be extracted later. Starting with microservices would add network, deployment, and consistency overhead without demonstrating more AI-system judgment.
 
 ### Target component architecture
 
@@ -363,7 +363,7 @@ Each branch returns a typed success, empty, denied, timeout, or failed result. T
 7. Return typed evidence including scores, metadata, content hash, and source URI.
 8. Validate citations against this evidence set. Never accept a source ID created only by the model.
 
-The local feature-hash dense score remains a credential-free development fallback. The sparse path now implements corpus-aware BM25; assessment-quality semantic retrieval still requires configured learned embeddings.
+The local feature-hash dense score remains a credential-free development fallback. The sparse path now implements corpus-aware BM25; production-quality semantic retrieval still requires configured learned embeddings.
 
 ### Pinecone organization
 
@@ -418,7 +418,7 @@ The standalone `app/mcp_server.py` already exposes dummy service-catalog and emp
 
 ## 13. Observability process
 
-LangSmith is mandatory for the assessment. Each chat request creates one root trace with child runs for:
+LangSmith provides end-to-end observability for the portfolio deployment. Each chat request creates one root trace with child runs for:
 
 - input validation and injection screening;
 - memory load/save;
@@ -454,7 +454,7 @@ Structured application logs complement traces. Emit node duration, dependency st
 
 ## 15. Deployment topology
 
-### Local assessment deployment
+### Local portfolio deployment
 
 Docker Compose should run:
 
@@ -778,7 +778,7 @@ The proposed initial gates are assumptions to be tuned with a larger evaluation 
 | Unauthorized tool/document test cases | 0 successful bypasses |
 | Citation precision on golden set | ≥ 95% |
 | Citation-required answers with at least one valid citation | 100% |
-| Grounded-answer score on golden set | ≥ 0.85 using documented evaluator rubric |
+| Grounded-answer score on golden set | ≥ 0.85 using a documented evaluation rubric |
 | Expected route accuracy | ≥ 95% |
 | Simple-question p95 backend latency | < 8 seconds under the defined demo load |
 | Research-question p95 backend latency | < 25 seconds under the defined demo load |
@@ -790,7 +790,7 @@ Do not claim these thresholds have passed until CI or a recorded local run provi
 
 ## 25. Definition of Done
 
-The assessment is complete when:
+The portfolio release is complete when:
 
 - [ ] All P0 requirements in the traceability matrix are implemented.
 - [x] Streamlit displays real-time graph/tool/retrieval/memory/validation activity and streamed answer tokens.
@@ -869,7 +869,7 @@ MCP_SERVER_URL=<mcp-endpoint>
 
 LANGCHAIN_TRACING_V2=true
 LANGCHAIN_API_KEY=<secret>
-LANGCHAIN_PROJECT=orysys-enterprise-assistant
+LANGCHAIN_PROJECT=enterprise-ai-assistant
 
 RATE_LIMIT_CAPACITY=20
 RATE_LIMIT_REFILL_PER_SECOND=0.2
@@ -955,7 +955,7 @@ The assistant represents a commercial bank and should:
 
 ## 34. Scope and non-goals
 
-### In scope for this assessment
+### In scope for this project
 
 - Read-only knowledge questions and read-only dummy enterprise tools.
 - Mock organizational content.
@@ -975,7 +975,7 @@ The assistant represents a commercial bank and should:
 
 ## 35. Assumptions
 
-- The evaluator accepts hardcoded users for the POC, as explicitly allowed by the assignment.
+- Hardcoded demo users are acceptable for this local POC and are replaced with OIDC/JWT in a production deployment.
 - Sample content is synthetic and safe for a public repository.
 - Pinecone and LangSmith credentials will be provided for the evaluated demo.
 - The model provider is selected by configuration and permitted for the demo data classification.
@@ -988,7 +988,7 @@ The assistant represents a commercial bank and should:
 | Decision | Chosen approach | Benefit | Cost / revisit trigger |
 |---|---|---|---|
 | Deployment shape | Modular monolith | Fast delivery, simple traces, one policy boundary | Extract ingestion/tool workers when independent scale or ownership requires it. |
-| Auth | Hardcoded POC tokens behind auth port | Meets allowed assessment option and keeps demo repeatable | Replace with OIDC/JWT before non-demo use. |
+| Auth | Hardcoded POC tokens behind auth port | Keeps the local demo repeatable | Replace with OIDC/JWT before non-demo use. |
 | Retrieval | Pinecone dense+sparse hybrid with local fallback | Meets requirement and remains developer-friendly | Revisit encoder/reranker using evaluation data and cost. |
 | Orchestration | LangGraph with deterministic policy nodes | Observable state and bounded control flow | Avoid using free-form model agents for authorization. |
 | RLM | Bounded map/refine/reduce | Demonstrates recursion with controlled cost/failure | Increase depth only with measured quality gain. |
@@ -1033,7 +1033,7 @@ These questions do not block the blueprint; the listed defaults allow implementa
 | Enterprise tools | MCP Python SDK / FastMCP | Existing server; planned real MCP client path. |
 | Observability | LangSmith + JSON logs | LangSmith mandatory; logs provide operational correlation. |
 | Tests/evaluation | pytest ecosystem + curated golden set | Planned automated quality and security evidence. |
-| Packaging/deployment | Docker + Docker Compose | Bonus and reproducible evaluator setup. |
+| Packaging/deployment | Docker + Docker Compose | Reproducible reviewer and developer setup. |
 
 ## 39. Dependency policy
 
@@ -1087,4 +1087,4 @@ These questions do not block the blueprint; the listed defaults allow implementa
 
 ## 41. Immediate next implementation slice
 
-The highest-value next slice is durable LangGraph checkpointing, provider token deltas through SSE, Pinecone/LangSmith demo credential verification, and a retrieval/groundedness evaluation set. These close the main remaining gap between the implemented modular POC and a repeatable assessment demonstration.
+The highest-value next slice is durable LangGraph checkpointing, provider token deltas through SSE, Pinecone/LangSmith demo credential verification, and a retrieval/groundedness evaluation set. These close the main remaining gap between the implemented modular POC and a repeatable portfolio demonstration.

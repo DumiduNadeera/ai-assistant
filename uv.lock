@@ -1643,7 +1643,7 @@ wheels = [
 ]
 
 [[package]]
-name = "orysys-enterprise-ai-assistant"
+name = "enterprise-ai-assistant"
 version = "0.2.0"
 source = { editable = "." }
 dependencies = [

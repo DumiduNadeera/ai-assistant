@@ -5,9 +5,9 @@ import uuid
 import requests
 import streamlit as st
 
-st.set_page_config(page_title="Orysys AI Assistant", layout="wide")
-st.title("Orysys AI Assistant")
-st.caption("Evidence-grounded enterprise knowledge assistant · Assessment environment")
+st.set_page_config(page_title="Enterprise AI Assistant", layout="wide")
+st.title("Enterprise AI Assistant")
+st.caption("Evidence-grounded enterprise knowledge and operations assistant")
 
 api_url = st.sidebar.text_input("API URL", os.getenv("API_BASE_URL", "http://localhost:8000"))
 role = st.sidebar.selectbox("Demo role", ["viewer", "analyst", "administrator"])

@@ -74,7 +74,7 @@ function Draw-Arrow([int]$x1, [int]$y1, [int]$x2, [int]$y2, [string]$label = '')
     }
 }
 
-$graphics.DrawString('Orysys Enterprise Assistant — Compiled LangGraph', $titleFont, $textBrush, 480, 30)
+$graphics.DrawString('Enterprise AI Assistant — Compiled LangGraph', $titleFont, $textBrush, 480, 30)
 $graphics.DrawString('Typed orchestration with policy, retrieval, research, tools, validation, and memory', $detailFont, $mutedBrush, 585, 80)
 
 Draw-RoundNode 750 120 300 70 'START' '' ([System.Drawing.Color]::FromArgb(226, 232, 240))
@@ -85,7 +85,7 @@ Draw-Diamond 900 710 350 150 'Selected route'
 
 Draw-RoundNode 80 850 390 110 'retrieval_agent' 'Authorized knowledge search; dense + BM25 fusion' ([System.Drawing.Color]::FromArgb(220, 252, 231))
 Draw-RoundNode 510 850 390 110 'research_planner' 'Create bounded targeted subqueries' ([System.Drawing.Color]::FromArgb(220, 252, 231))
-Draw-RoundNode 510 1010 390 110 'research_agent' 'Concurrent retrieval, analysis, deduplication, aggregation' ([System.Drawing.Color]::FromArgb(220, 252, 231))
+Draw-RoundNode 510 1010 390 110 'research_agent' 'Bounded recursive retrieval, evidence refinement, aggregation' ([System.Drawing.Color]::FromArgb(220, 252, 231))
 
 Draw-RoundNode 1020 850 390 110 'authorize_tool' 'Deterministic role and tool policy check' ([System.Drawing.Color]::FromArgb(243, 232, 255))
 Draw-Diamond 1215 1060 315 140 'Authorized?'
