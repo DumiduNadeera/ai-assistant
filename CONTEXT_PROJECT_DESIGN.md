@@ -93,7 +93,7 @@ The “current” column reflects the repository as inspected on 2026-10-06.
 | AG-01 | LangGraph orchestration | Implemented | Compiled graph is the only chat orchestration path. |
 | AG-02 | Multiple specialized agents | Implemented | Supervisor, retrieval, research, tool, response, and validation nodes have typed inputs and testable responsibilities. |
 | RLM-01 | Explore collections and create a search plan | Implemented | Planner emits bounded subqueries and the research agent executes concurrent branches. |
-| RLM-02 | Decompose, batch, recurse, aggregate | Partial | Broad queries use bounded fan-out/fan-in, optional one-step refinement, and provenance-preserving aggregation. |
+| RLM-02 | Decompose, batch, recurse, aggregate | Implemented | Broad queries use concurrent retrieval per depth, evidence-based refinement, recursive agent iterations bounded by `MAX_RLM_DEPTH`, chunk-level provenance, and deterministic aggregation. |
 | RAG-01 | Dense search | Implemented | Learned embeddings run when configured; deterministic vectors support offline development. |
 | RAG-02 | Sparse/BM25 search | Implemented | Corpus-aware BM25 uses document frequency and length normalization. |
 | RAG-03 | Hybrid ranking | Implemented | Dense and sparse scores are normalized and fused with configurable alpha; reranking remains optional. |
@@ -201,7 +201,7 @@ flowchart LR
     RESP --> END
 ```
 
-It is a good first skeleton, but the route is keyword-based, the research branch is a single pass, history does not influence graph answers, and model calls are not yet present.
+The compiled graph is intentionally acyclic. Its research node performs bounded internal recursion: it retrieves concurrently, inspects accumulated evidence, creates targeted follow-up queries, and invokes the next depth while budget remains.
 
 ### Target graph
 
@@ -324,7 +324,7 @@ sequenceDiagram
 
 ## 9. Bounded RLM workflow
 
-The RLM implementation should demonstrate recursive exploration without unbounded autonomy:
+The RLM implementation performs recursive exploration within explicit budgets:
 
 1. **Scope** — extract date, department, document type, access filters, desired output, and ambiguity.
 2. **Plan** — produce schema-validated sub-questions such as incident discovery, cause extraction, impact extraction, and recurrence analysis.
@@ -332,7 +332,7 @@ The RLM implementation should demonstrate recursive exploration without unbounde
 4. **Partition** — group by document or a bounded batch size; preserve source IDs in every task.
 5. **Map** — research workers summarize one batch against a fixed extraction schema.
 6. **Analyze** — the Python tool deterministically counts structured signals, dates, categories, and repeated causes. It never runs user code.
-7. **Inspect** — identify evidence gaps or conflicting sources. A worker may request one refined query if depth and deadline remain.
+7. **Inspect** — identify evidence gaps, referenced records, missing incident sections, and recurring evidence terms. The agent creates bounded refinement queries when depth and deadline remain.
 8. **Reduce** — aggregate findings, deduplicate claims, surface conflicts, and retain claim-level provenance.
 9. **Validate** — ensure every material factual claim is linked to retrieved evidence before responding.
 
@@ -796,7 +796,7 @@ The assessment is complete when:
 - [x] Streamlit displays real-time graph/tool/retrieval/memory/validation activity and streamed answer tokens.
 - [ ] Provider-configurable LLM calls produce structured supervisor, plan, and response outputs.
 - [ ] Pinecone performs learned dense plus sparse hybrid retrieval with mandatory ACL metadata filters.
-- [ ] RLM research uses bounded fan-out/fan-in, provenance, and branch failure isolation.
+- [x] RLM research uses bounded fan-out/fan-in, evidence-based recursive refinement, provenance, and branch failure isolation.
 - [ ] Conversation context is durable, owned by the authenticated user, and influences follow-ups.
 - [ ] MCP is invoked through a real client boundary and fails explicitly when unavailable.
 - [ ] LangSmith traces are complete, redacted, and inspectable during the demo.
@@ -1068,7 +1068,7 @@ These questions do not block the blueprint; the listed defaults allow implementa
 
 ### Phase 3 — RLM and memory
 
-- Add bounded planner, fan-out research workers, one-step query refinement, Python analysis, and provenance-preserving reducer.
+- Maintain the implemented bounded planner, recursive research iterations, evidence-based query refinement, Python analysis, and provenance-preserving reducer.
 - Add PostgreSQL checkpointer, session ownership, history summarization, reset/delete, and restart tests.
 
 ### Phase 4 — Tool boundary, policy, and security

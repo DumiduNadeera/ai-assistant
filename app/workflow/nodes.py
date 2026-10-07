@@ -13,6 +13,7 @@ from app.memory import memory_store
 from app.observability.tracing import traced
 from app.tools import knowledge_search, python_analysis
 from app.workflow.events import error, event
+from app.workflow.research import run_recursive_research
 from app.workflow.routing import classify_request, create_search_plan
 from app.workflow.state import AgentState
 
@@ -63,36 +64,56 @@ async def research_planner(state: AgentState) -> dict:
     return {"search_plan": plan, "activity": [event("research_planner", "completed", f"Created {len(plan)} bounded research subqueries.")]}
 
 
-async def _search_subquery(query: str, role: str, semaphore: asyncio.Semaphore) -> list[dict]:
-    async with semaphore:
-        return await asyncio.wait_for(knowledge_search(query, role, settings.retrieval_top_k), timeout=settings.retrieval_timeout_seconds)
-
-
 @traced("research_agent", "chain")
 async def research_agent(state: AgentState) -> dict:
-    semaphore = asyncio.Semaphore(3)
-    results = await asyncio.gather(*(_search_subquery(query, state["user_role"], semaphore) for query in state.get("search_plan", [])), return_exceptions=True)
-    deduplicated: dict[str, dict] = {}
-    failures = 0
-    for result in results:
-        if isinstance(result, BaseException):
-            failures += 1
-            continue
-        for document in result:
-            doc_id = document["document_id"]
-            if doc_id not in deduplicated or document.get("score", 0) > deduplicated[doc_id].get("score", 0):
-                deduplicated[doc_id] = document
-    documents = sorted(deduplicated.values(), key=lambda item: item.get("score", 0), reverse=True)[:settings.max_rlm_documents]
+    research = await run_recursive_research(
+        state["normalized_query"],
+        state.get("search_plan", []),
+        state["user_role"],
+        max_depth=settings.max_rlm_depth,
+        max_subqueries=settings.max_rlm_subqueries,
+        max_documents=settings.max_rlm_documents,
+        top_k=settings.retrieval_top_k,
+        timeout=settings.retrieval_timeout_seconds,
+    )
+    documents = research["documents"]
+    iterations = research["iterations"]
+    failures = int(research["failures"])
     can_analyze = state["user_role"] in {"analyst", "administrator"}
     analysis = python_analysis(documents) if can_analyze else {"evidence_lines": [], "signal_counts": {}}
     themes = analysis.get("evidence_lines", [])
-    summary = "Research workflow searched targeted subsets and aggregated the following supported themes:\n\n"
+    summary = (
+        f"Recursive research completed {len(iterations)} iteration(s) to depth "
+        f"{research['depth_reached']}, executed {len(research['executed_queries'])} targeted "
+        f"queries, and retained {len(documents)} evidence chunks.\n\nSupported themes:\n"
+    )
     summary += "\n".join(f"- {line}" for line in themes[:8]) if themes else "No recurring cause was supported by the retrieved evidence."
-    activity = []
+    activity = [
+        event(
+            f"research_depth_{iteration['depth']}",
+            "warning" if iteration["branch_failures"] else "completed",
+            f"Executed {len(iteration['queries'])} queries, found {iteration['new_candidates']} "
+            f"candidates, retained {iteration['accumulated_chunks']} chunks, and recorded "
+            f"{iteration['branch_failures']} branch failures.",
+        )
+        for iteration in iterations
+    ]
     if can_analyze:
         activity.append(event("python_analysis", "completed", f"Analyzed {analysis.get('documents_analyzed', 0)} bounded evidence chunks."))
-    activity.append(event("research_agent", "completed", f"Aggregated {len(documents)} unique documents from {len(results)} research branches; {failures} branch failures."))
-    updates: dict[str, Any] = {"retrieved_documents": documents, "research_summary": summary, "tool_results": [analysis] if can_analyze else [], "activity": activity}
+    activity.append(event("research_agent", "completed", f"Completed bounded recursive research at depth {research['depth_reached']}; {failures} branch failures."))
+    updates: dict[str, Any] = {
+        "retrieved_documents": documents,
+        "research_summary": summary,
+        "research_depth": research["depth_reached"],
+        "research_iterations": iterations,
+        "refinement_queries": [
+            query
+            for iteration in iterations
+            for query in iteration.get("refinement_queries", [])
+        ],
+        "tool_results": [analysis] if can_analyze else [],
+        "activity": activity,
+    }
     if failures:
         updates["errors"] = [error("partial_research_failure", "research_agent", f"{failures} search branches failed.", retryable=True)]
     return updates

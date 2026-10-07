@@ -16,7 +16,7 @@ flowchart TB
     RET --> BM[Corpus-aware BM25]
     RET --> EMB[Embedding provider]
     EMB --> PC[(Pinecone namespace)]
-    LG --> RLM[Bounded research fan-out / fan-in]
+    LG --> RLM[Bounded recursive research / refine / reduce]
     LG --> MCP[MCP client]
     MCP --> MCPS[MCP dummy enterprise server]
     LG --> PY[Bounded Python analysis]
@@ -68,7 +68,7 @@ Markdown is parsed into heading-level chunks with stable `document_id`, `chunk_i
 
 ## RLM controls
 
-Complex requests produce bounded subqueries. Independent retrieval branches run concurrently with a semaphore, tolerate partial branch failure, deduplicate by document ID, cap evidence, invoke analyst-only structured analysis when authorized, and aggregate supported themes. The graph remains acyclic; recursion depth and fan-out settings are explicit configuration ceilings.
+Complex requests begin with bounded subqueries. At each depth, retrieval branches run concurrently with a semaphore and tolerate partial branch failure. The research agent inspects accumulated evidence for referenced records, missing incident sections, and recurring evidence terms, then recursively invokes the next research iteration with targeted refinement queries. `MAX_RLM_DEPTH`, `MAX_RLM_SUBQUERIES`, `MAX_RLM_DOCUMENTS`, per-call deadlines, and chunk-level deduplication bound the work. Each iteration has its own LangSmith child span and live activity events. The compiled graph remains acyclic while the research node performs bounded internal recursion.
 
 ## Reliability
 

@@ -172,7 +172,14 @@ async def chat_stream(payload: ChatRequest, user: User = Depends(get_current_use
                                 aggregate[key] = value
                         state_update = {
                             key: node_update[key]
-                            for key in ("route", "intent", "complexity", "tool_name", "tool_authorized")
+                            for key in (
+                                "route",
+                                "intent",
+                                "complexity",
+                                "tool_name",
+                                "tool_authorized",
+                                "research_depth",
+                            )
                             if key in node_update
                         }
                         if state_update:

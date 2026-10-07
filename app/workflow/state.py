@@ -22,6 +22,9 @@ class AgentState(TypedDict, total=False):
     tool_authorized: bool
     tool_results: list[dict[str, Any]]
     research_summary: str
+    research_depth: int
+    research_iterations: list[dict[str, Any]]
+    refinement_queries: list[str]
     final_answer: str
     citations: list[dict[str, str]]
     validation_results: Annotated[list[dict[str, Any]], operator.add]

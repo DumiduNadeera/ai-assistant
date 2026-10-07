@@ -168,6 +168,6 @@ CI runs linting, typing, tests with branch coverage, Compose validation, contain
 - Session memory, token buckets, and local indexes are process-local; Compose intentionally runs one API worker.
 - Hardcoded identities are permitted by the assessment and must be replaced by OIDC/JWT for real use.
 - The offline dense fallback is suitable for repeatable development, while assessment-quality semantic retrieval requires configured embeddings and a matching Pinecone index.
-- The RLM workflow is intentionally bounded by subquery, document, concurrency, and request-deadline limits.
+- The RLM workflow recursively refines searches from accumulated evidence and is bounded by `MAX_RLM_DEPTH`, subquery, document, concurrency, and request-deadline limits.
 - All MCP and analysis capabilities are read-only. No arbitrary Python supplied by users or documents is executed.
 - Publishing the repository, LangSmith trace URL, and 45-minute demo remains an owner-operated external step.

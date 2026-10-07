@@ -190,6 +190,36 @@ if prompt:
                 elif event_type == "retrieval.failed":
                     upsert_activity(message, status="failed", detail=message.get("detail", "Retrieval failed."))
                     render_activity(st.session_state.activity)
+                elif event_type == "research.iteration.started":
+                    depth = message.get("depth", 1)
+                    queries = message.get("queries", [])
+                    st.session_state.agent_state["research_depth"] = f"{depth}/{message.get('max_depth', depth)}"
+                    activity_message = {**message, "node": f"research_depth_{depth}"}
+                    detail = f"Running {len(queries)} research queries: {' | '.join(queries)}"
+                    upsert_activity(activity_message, status="started", detail=detail)
+                    render_activity(st.session_state.activity)
+                elif event_type == "research.iteration.completed":
+                    depth = message.get("depth", 1)
+                    failures = int(message.get("branch_failures", 0))
+                    activity_message = {**message, "node": f"research_depth_{depth}"}
+                    detail = (
+                        f"Found {message.get('new_candidates', 0)} candidates and retained "
+                        f"{message.get('accumulated_chunks', 0)} evidence chunks; "
+                        f"{failures} branch failures."
+                    )
+                    upsert_activity(
+                        activity_message,
+                        status="warning" if failures else "completed",
+                        detail=detail,
+                    )
+                    render_activity(st.session_state.activity)
+                elif event_type == "research.refinement.planned":
+                    next_depth = message.get("next_depth", 1)
+                    queries = message.get("queries", [])
+                    activity_message = {**message, "node": f"research_refinement_{next_depth}"}
+                    detail = f"Planned evidence-based queries for depth {next_depth}: {' | '.join(queries)}"
+                    upsert_activity(activity_message, status="completed", detail=detail)
+                    render_activity(st.session_state.activity)
                 elif event_type == "tool.started":
                     detail = f"Calling {message.get('tool', 'enterprise tool')} with {message.get('arguments', {})}."
                     upsert_activity(message, status="started", detail=detail)
