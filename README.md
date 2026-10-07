@@ -51,6 +51,8 @@ request → authentication → token bucket → LangGraph
 
 The API stream emits typed node lifecycle, state, retrieval, tool, validation, answer-token, and completion events. The UI renders those events while the graph is running and keeps them with the session. Execution events expose safe operational activity without exposing hidden chain-of-thought.
 
+LangGraph runs and named workflow nodes are traced automatically when LangSmith is enabled. The Ollama/OpenAI-compatible client is wrapped with LangSmith's OpenAI wrapper so each model request is recorded as a nested LLM span beneath the response agent.
+
 ## Configuration profiles
 
 The default profile is credential-free and uses deterministic grounded synthesis plus a local learned-shape fallback vector and true BM25 scoring.
@@ -67,9 +69,15 @@ LLM_PROVIDER=ollama
 LLM_MODEL=qwen3:4b-instruct
 LLM_BASE_URL=http://127.0.0.1:11434/v1/
 LLM_API_KEY=ollama
+LLM_TIMEOUT_SECONDS=90
+LLM_MAX_OUTPUT_TOKENS=320
+OLLAMA_THINK=false
 GRAPH_TIMEOUT_SECONDS=120
 STREAM_READ_TIMEOUT_SECONDS=150
 ```
+
+Restart the FastAPI process after changing `.env`; settings are loaded when the process starts. On CPU-only machines,
+keeping Ollama thinking disabled and bounding output prevents local generation from consuming the graph deadline.
 
 When the API runs in Docker and Ollama runs on the Windows host, set `LLM_BASE_URL=http://host.docker.internal:11434/v1/`.
 
@@ -86,9 +94,11 @@ PINECONE_API_KEY=...
 PINECONE_INDEX=...
 PINECONE_NAMESPACE=enterprise-demo
 
-LANGCHAIN_TRACING_V2=true
-LANGCHAIN_API_KEY=...
-LANGCHAIN_PROJECT=orysys-enterprise-assistant
+LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=...
+LANGSMITH_PROJECT=orysys-enterprise-assistant
+LANGSMITH_ENDPOINT=https://api.smith.langchain.com
+# LANGSMITH_WORKSPACE_ID=...  # only for keys scoped to multiple workspaces
 
 MCP_TRANSPORT=stdio
 ```

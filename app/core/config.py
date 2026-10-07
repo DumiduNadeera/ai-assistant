@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     retrieval_timeout_seconds: float = 8.0
     tool_timeout_seconds: float = 5.0
     mcp_transport: str = "local"
-    graph_timeout_seconds: float = 30.0
+    graph_timeout_seconds: float = 120.0
     max_graph_steps: int = 20
     max_rlm_depth: int = 2
     max_rlm_subqueries: int = 4
@@ -26,14 +26,35 @@ class Settings(BaseSettings):
     llm_model: str = "gpt-5-mini"
     llm_base_url: str = ""
     llm_api_key: str = ""
+    llm_timeout_seconds: float = 90.0
+    llm_max_output_tokens: int = 320
+    ollama_think: bool = False
     embedding_model: str = "text-embedding-3-small"
     embedding_dimensions: int = 1536
     openai_api_key: str = ""
+    langsmith_tracing: bool = False
+    langsmith_api_key: str = ""
+    langsmith_project: str = ""
+    langsmith_endpoint: str = ""
+    langsmith_workspace_id: str = ""
+    # Backward compatibility for deployments using the former variable names.
     langchain_tracing_v2: bool = False
     langchain_api_key: str = ""
     langchain_project: str = "orysys-enterprise-assistant"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    @property
+    def tracing_enabled(self) -> bool:
+        return self.langsmith_tracing or self.langchain_tracing_v2
+
+    @property
+    def tracing_api_key(self) -> str:
+        return self.langsmith_api_key or self.langchain_api_key
+
+    @property
+    def tracing_project(self) -> str:
+        return self.langsmith_project or self.langchain_project
 
 
 settings = Settings()

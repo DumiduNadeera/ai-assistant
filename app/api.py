@@ -41,7 +41,7 @@ async def ready() -> dict:
         "status": "ready",
         "retrieval": "pinecone-hybrid" if settings.pinecone_api_key and settings.pinecone_index else "local-hybrid-fallback",
         "llm_provider": settings.llm_provider,
-        "langsmith_configured": bool(settings.langchain_tracing_v2 and settings.langchain_api_key),
+        "langsmith_configured": bool(settings.tracing_enabled and settings.tracing_api_key),
     }
 
 

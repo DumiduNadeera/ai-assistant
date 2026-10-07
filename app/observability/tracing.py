@@ -8,15 +8,19 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 
 def configure_tracing() -> None:
-    if settings.langchain_tracing_v2 and settings.langchain_api_key:
-        os.environ.setdefault("LANGCHAIN_TRACING_V2", "true")
-        os.environ.setdefault("LANGCHAIN_API_KEY", settings.langchain_api_key)
-        os.environ.setdefault("LANGCHAIN_PROJECT", settings.langchain_project)
+    if settings.tracing_enabled and settings.tracing_api_key:
+        os.environ["LANGSMITH_TRACING"] = "true"
+        os.environ["LANGSMITH_API_KEY"] = settings.tracing_api_key
+        os.environ["LANGSMITH_PROJECT"] = settings.tracing_project
+        if settings.langsmith_endpoint:
+            os.environ["LANGSMITH_ENDPOINT"] = settings.langsmith_endpoint.rstrip("/")
+        if settings.langsmith_workspace_id:
+            os.environ["LANGSMITH_WORKSPACE_ID"] = settings.langsmith_workspace_id
 
 
 def traced(name: str, run_type: str = "chain"):
     """Use LangSmith's decorator when available; preserve local execution otherwise."""
-    if not (settings.langchain_tracing_v2 and settings.langchain_api_key):
+    if not (settings.tracing_enabled and settings.tracing_api_key):
         def passthrough(func: F) -> F:
             return func
         return passthrough

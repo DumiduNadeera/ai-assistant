@@ -1,0 +1,5 @@
+INFO:     Started server process [5800]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+{"timestamp": "2026-10-07T12:51:51.286666+00:00", "level": "INFO", "event": "chat_completed", "session_id": "langsmith-check-c0c6d375918948b9b8b7201993d0ca1a", "user_id": "analyst@example.com", "role": "analyst", "route": "tool"}

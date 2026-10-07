@@ -1,0 +1,2 @@
+INFO:     127.0.0.1:55397 - "GET /api/v1/ready HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54758 - "POST /api/v1/chat HTTP/1.1" 200 OK
