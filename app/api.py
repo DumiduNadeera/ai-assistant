@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 from collections.abc import AsyncIterator
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -108,6 +109,10 @@ def _sse(payload: dict) -> str:
     return f"data: {json.dumps(payload, ensure_ascii=False, default=str)}\n\n"
 
 
+def _stream_timestamp() -> str:
+    return datetime.now(UTC).isoformat()
+
+
 @app.post("/api/v1/chat/stream")
 async def chat_stream(payload: ChatRequest, user: User = Depends(get_current_user)) -> StreamingResponse:
     await _rate_limit(user)
@@ -118,11 +123,45 @@ async def chat_stream(payload: ChatRequest, user: User = Depends(get_current_use
         yield _sse({"type": "run.started", "run_id": run_id, "session_id": payload.session_id})
         try:
             async with asyncio.timeout(settings.graph_timeout_seconds):
-                async for update in assistant_graph.astream(
+                async for part in assistant_graph.astream(
                     aggregate,
                     config={"configurable": {"thread_id": payload.session_id}, "run_name": "enterprise_assistant_stream", "metadata": {"run_id": run_id, "user_role": user.role}},
-                    stream_mode="updates",
+                    stream_mode=["updates", "custom", "tasks"],
+                    version="v2",
                 ):
+                    stream_type = part["type"]
+                    stream_data = part["data"]
+
+                    if stream_type == "tasks":
+                        node_name = stream_data.get("name", "workflow")
+                        if node_name.startswith("__"):
+                            continue
+                        if "input" in stream_data:
+                            yield _sse({
+                                "type": "node.started",
+                                "run_id": run_id,
+                                "node": node_name,
+                                "task_id": stream_data.get("id"),
+                                "timestamp": _stream_timestamp(),
+                            })
+                        else:
+                            failed = bool(stream_data.get("error"))
+                            yield _sse({
+                                "type": "node.failed" if failed else "node.completed",
+                                "run_id": run_id,
+                                "node": node_name,
+                                "task_id": stream_data.get("id"),
+                                "detail": str(stream_data.get("error") or "Node execution completed."),
+                                "timestamp": _stream_timestamp(),
+                            })
+                        continue
+
+                    if stream_type == "custom":
+                        if isinstance(stream_data, dict) and stream_data.get("type"):
+                            yield _sse({**stream_data, "run_id": run_id, "timestamp": _stream_timestamp()})
+                        continue
+
+                    update = stream_data
                     for node_name, node_update in update.items():
                         if not isinstance(node_update, dict):
                             continue
@@ -131,8 +170,41 @@ async def chat_stream(payload: ChatRequest, user: User = Depends(get_current_use
                                 aggregate.setdefault(key, []).extend(value)
                             else:
                                 aggregate[key] = value
+                        state_update = {
+                            key: node_update[key]
+                            for key in ("route", "intent", "complexity", "tool_name", "tool_authorized")
+                            if key in node_update
+                        }
+                        if state_update:
+                            yield _sse({
+                                "type": "state.updated",
+                                "run_id": run_id,
+                                "node": node_name,
+                                "state": state_update,
+                                "timestamp": _stream_timestamp(),
+                            })
                         for activity in node_update.get("activity", []):
                             yield _sse({"type": "activity", "run_id": run_id, **activity})
+                        for validation in node_update.get("validation_results", []):
+                            yield _sse({
+                                "type": "validation.result",
+                                "run_id": run_id,
+                                "node": node_name,
+                                "result": validation,
+                                "timestamp": _stream_timestamp(),
+                            })
+                        for error_item in node_update.get("errors", []):
+                            yield _sse({
+                                "type": "workflow.error",
+                                "run_id": run_id,
+                                "node": node_name,
+                                "error": {
+                                    "code": error_item.get("code", "workflow_error"),
+                                    "retryable": bool(error_item.get("retryable")),
+                                    "detail": "The workflow reported a controlled error.",
+                                },
+                                "timestamp": _stream_timestamp(),
+                            })
                         if "final_answer" in node_update:
                             yield _sse({"type": "answer.completed", "run_id": run_id, "answer": node_update["final_answer"], "citations": node_update.get("citations", [])})
             response = _to_response(payload, run_id, aggregate)

@@ -1,6 +1,9 @@
 import asyncio
 from typing import Any
 
+from langgraph.config import get_stream_writer
+from langgraph.types import StreamWriter
+
 from app.core.config import settings
 from app.core.guardrails import detect_untrusted_instructions, validate_user_input
 from app.core.security import authorize_tool
@@ -12,6 +15,13 @@ from app.tools import knowledge_search, python_analysis
 from app.workflow.events import error, event
 from app.workflow.routing import classify_request, create_search_plan
 from app.workflow.state import AgentState
+
+
+def _stream_writer() -> StreamWriter:
+    try:
+        return get_stream_writer()
+    except RuntimeError:
+        return lambda _: None
 
 
 @traced("validate_request", "chain")
@@ -36,10 +46,14 @@ async def supervisor_agent(state: AgentState) -> dict:
 
 @traced("retrieval_agent", "retriever")
 async def retrieval_agent(state: AgentState) -> dict:
+    writer = _stream_writer()
+    writer({"type": "retrieval.started", "node": "retrieval_agent"})
     try:
         documents = await asyncio.wait_for(knowledge_search(state["normalized_query"], state["user_role"], settings.retrieval_top_k), timeout=settings.retrieval_timeout_seconds)
+        writer({"type": "retrieval.completed", "node": "retrieval_agent", "candidates": len(documents)})
         return {"retrieved_documents": documents, "activity": [event("retrieval_agent", "completed", f"Hybrid retrieval returned {len(documents)} candidates.")]}
     except Exception as exc:
+        writer({"type": "retrieval.failed", "node": "retrieval_agent", "detail": "Retrieval failed; controlled fallback active."})
         return {"retrieved_documents": [], "errors": [error("retrieval_unavailable", "retrieval_agent", str(exc), retryable=True)], "activity": [event("retrieval_agent", "warning", "Retrieval failed; continuing with a controlled no-evidence response.")]}
 
 
@@ -95,10 +109,14 @@ async def authorize_tool_node(state: AgentState) -> dict:
 
 @traced("enterprise_tool", "tool")
 async def enterprise_tool(state: AgentState) -> dict:
+    writer = _stream_writer()
+    writer({"type": "tool.started", "node": "enterprise_tool", "tool": state["tool_name"], "arguments": state.get("tool_args", {})})
     try:
         items = await asyncio.wait_for(mcp_client.call_tool(state["tool_name"], state.get("tool_args", {})), timeout=settings.tool_timeout_seconds)
+        writer({"type": "tool.completed", "node": "enterprise_tool", "tool": state["tool_name"], "records": len(items)})
         return {"tool_results": items, "activity": [event("enterprise_tool", "completed", f"Returned {len(items)} validated MCP records.")]}
     except asyncio.TimeoutError:
+        writer({"type": "tool.failed", "node": "enterprise_tool", "tool": state["tool_name"], "detail": "Enterprise tool timed out."})
         return {"tool_results": [], "errors": [error("tool_timeout", "enterprise_tool", "Enterprise tool timed out.", retryable=True)], "activity": [event("enterprise_tool", "warning", "Enterprise tool timed out; no records returned.")]}
 
 
@@ -116,8 +134,11 @@ async def validate_evidence(state: AgentState) -> dict:
 
 @traced("response_agent", "llm")
 async def response_agent(state: AgentState) -> dict:
+    writer = _stream_writer()
+    writer({"type": "answer.started", "node": "response_agent"})
     if state.get("route") == "denied":
         answer = "I can’t process that request because it conflicts with the assistant’s security policy."
+        writer({"type": "answer.delta", "node": "response_agent", "delta": answer})
     elif state.get("route") == "tool":
         if not state.get("tool_authorized"):
             answer = "Your role is not authorized to use the requested enterprise tool."
@@ -125,8 +146,15 @@ async def response_agent(state: AgentState) -> dict:
             answer = "Enterprise data result:\n\n" + "\n".join("- " + "; ".join(f"{key}: {value}" for key, value in item.items()) for item in state["tool_results"])
         else:
             answer = "The enterprise data tool is temporarily unavailable or returned no matching records."
+        writer({"type": "answer.delta", "node": "response_agent", "delta": answer})
     else:
-        answer = await generate_grounded_answer(state["normalized_query"], state.get("evidence", []), state.get("memory_context", []), state.get("research_summary", ""))
+        answer = await generate_grounded_answer(
+            state["normalized_query"],
+            state.get("evidence", []),
+            state.get("memory_context", []),
+            state.get("research_summary", ""),
+            on_token=lambda token: writer({"type": "answer.delta", "node": "response_agent", "delta": token}),
+        )
     citations = [{key: document[key] for key in ("document_id", "title", "section", "source_uri")} for document in state.get("evidence", [])]
     return {"final_answer": answer, "citations": citations, "activity": [event("response_agent", "completed", "Generated the final user-facing response from validated state.")]}
 

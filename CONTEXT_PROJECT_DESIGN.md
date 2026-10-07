@@ -85,7 +85,7 @@ The “current” column reflects the repository as inspected on 2026-10-06.
 | ID | Assignment requirement | Current | Target evidence / acceptance |
 |---|---|---:|---|
 | UI-01 | Streamlit chat, multi-turn | Implemented | Conversation history affects graph input; restart durability is a production follow-up. |
-| UI-02 | Streaming responses | Partial | `/api/v1/chat/stream` emits node events and answer tokens while work is running; Streamlit renders them incrementally. |
+| UI-02 | Streaming responses | Implemented | `/api/v1/chat/stream` emits node events and answer tokens while work is running; Streamlit renders them incrementally. |
 | UI-03 | Live agent activity panel | Implemented | Shows route, retrieval, tools, memory, validation, and finalization without exposing hidden chain-of-thought. |
 | BE-01 | Python, FastAPI, async APIs | Implemented | Endpoints, graph invocation, provider calls, retrieval, and MCP client are awaitable; blocking SDKs use worker threads. |
 | BE-02 | Proper exception handling | Implemented | Typed domain errors map to stable HTTP/SSE error codes; cancellation and deadlines propagate. |
@@ -793,7 +793,7 @@ Do not claim these thresholds have passed until CI or a recorded local run provi
 The assessment is complete when:
 
 - [ ] All P0 requirements in the traceability matrix are implemented.
-- [ ] Streamlit displays real-time graph/tool/retrieval/memory/validation activity and streamed answer tokens.
+- [x] Streamlit displays real-time graph/tool/retrieval/memory/validation activity and streamed answer tokens.
 - [ ] Provider-configurable LLM calls produce structured supervisor, plan, and response outputs.
 - [ ] Pinecone performs learned dense plus sparse hybrid retrieval with mandatory ACL metadata filters.
 - [ ] RLM research uses bounded fan-out/fan-in, provenance, and branch failure isolation.

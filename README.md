@@ -1,4 +1,4 @@
-# Orysys Commercial Bank AI Assistant
+# Orysys AI Assistant
 
 A secure and observable enterprise knowledge assistant built for the Orysys AI Lead assessment. The POC combines a streaming Streamlit interface, async FastAPI API, typed LangGraph workflow, bounded research/RLM path, hybrid retrieval, Pinecone integration, session memory, deterministic RBAC, security guardrails, MCP tools, Python analysis, and LangSmith tracing.
 
@@ -38,7 +38,7 @@ These tokens are POC fixtures and are never suitable for deployment.
 | Analyst | `demo-analyst-token` | Search, bounded Python analysis, and read-only MCP tools |
 | Administrator | `demo-admin-token` | All current POC tools and classifications |
 
-The Streamlit sidebar applies these automatically. For API calls, send `Authorization: Bearer <token>`.
+The Streamlit sidebar applies these automatically. Use **Show agent activity** to display or hide the live execution panel; activity continues to be collected while the panel is hidden. For API calls, send `Authorization: Bearer <token>`.
 
 ## Runtime architecture
 
@@ -49,7 +49,7 @@ request → authentication → token bucket → LangGraph
         → evidence validation → response → citation validation → memory → response
 ```
 
-The API stream emits a typed event after each completed node. The UI renders those events while the graph is running and keeps them with the session. Execution events expose routing, retrieval, tools, memory, and validation without exposing hidden chain-of-thought.
+The API stream emits typed node lifecycle, state, retrieval, tool, validation, answer-token, and completion events. The UI renders those events while the graph is running and keeps them with the session. Execution events expose safe operational activity without exposing hidden chain-of-thought.
 
 ## Configuration profiles
 
@@ -68,6 +68,7 @@ LLM_MODEL=qwen3:4b-instruct
 LLM_BASE_URL=http://127.0.0.1:11434/v1/
 LLM_API_KEY=ollama
 GRAPH_TIMEOUT_SECONDS=120
+STREAM_READ_TIMEOUT_SECONDS=150
 ```
 
 When the API runs in Docker and Ollama runs on the Windows host, set `LLM_BASE_URL=http://host.docker.internal:11434/v1/`.
@@ -98,6 +99,17 @@ Create the Pinecone index with dimensions matching `EMBEDDING_DIMENSIONS`, then 
 uv run python -m scripts.ingest_pinecone
 ```
 
+The mock corpus contains linked, fictional enterprise records:
+
+| Category | Documents |
+|---|---|
+| Incident reports | `INC-2025-0042`, `INC-2025-0061`, `INC-2025-0074` |
+| Architecture documents | `ARCH-2025-001`, `ARCH-2025-002` |
+| Operational runbooks | `RUN-2025-001`, `RUN-2025-002`, `RUN-2025-003` |
+| Product specifications | `PROD-2025-012`, `PROD-2025-018` |
+
+The records use dummy services, events, metrics, owners, timelines, and controls. Internal and confidential access levels support retrieval authorization demonstrations.
+
 `MCP_TRANSPORT=local` keeps the POC self-contained. `stdio` launches `app.mcp_server` through the MCP client adapter and invokes the same read-only dummy tools over the protocol.
 
 ## API endpoints
@@ -123,6 +135,9 @@ Chat request:
 
 - What caused the payment gateway outage?
 - How should operations respond to payment pool saturation?
+- What caused duplicate payment notifications, and which controls prevent recurrence?
+- How should operations recover a settlement backlog safely?
+- Compare the notification product requirements with its architecture and recovery runbook.
 - Summarize all payment incidents and identify recurring root causes.
 - What does the internal AI acceptable-use policy allow?
 - Show the service catalog.
