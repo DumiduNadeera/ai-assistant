@@ -1,6 +1,9 @@
 import asyncio
+import logging
 
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 SYSTEM_INSTRUCTIONS = """You are the evidence-grounded assistant for Orysys Commercial Bank.
@@ -23,10 +26,11 @@ def _deterministic_answer(question: str, evidence: list[dict], research_summary:
 
 
 async def generate_grounded_answer(question: str, evidence: list[dict], memory: list[dict], research_summary: str = "") -> str:
-    if settings.llm_provider.casefold() != "openai" or not settings.openai_api_key:
+    provider = settings.llm_provider.casefold()
+    if provider == "deterministic":
         return _deterministic_answer(question, evidence, research_summary)
 
-    from openai import AsyncOpenAI
+    from openai import AsyncOpenAI, OpenAIError
 
     evidence_text = "\n\n".join(
         f"SOURCE {item['document_id']} | {item['title']} | SECTION {item['section']}\n{item['content'][:2500]}"
@@ -34,14 +38,40 @@ async def generate_grounded_answer(question: str, evidence: list[dict], memory: 
     )
     memory_text = "\n".join(f"{message['role']}: {message['content'][:500]}" for message in memory[-6:])
     prompt = f"Conversation context:\n{memory_text or '(none)'}\n\nQuestion:\n{question}\n\nValidated evidence:\n{evidence_text or '(none)'}"
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
-    response = await asyncio.wait_for(
-        client.responses.create(
-            model=settings.llm_model,
-            instructions=SYSTEM_INSTRUCTIONS,
-            input=prompt,
-            store=False,
-        ),
-        timeout=settings.graph_timeout_seconds,
-    )
-    return str(response.output_text).strip()
+
+    try:
+        if provider == "ollama":
+            client = AsyncOpenAI(
+                base_url=settings.llm_base_url or "http://127.0.0.1:11434/v1/",
+                api_key=settings.llm_api_key or "ollama",
+            )
+            response = await asyncio.wait_for(
+                client.chat.completions.create(
+                    model=settings.llm_model,
+                    messages=[
+                        {"role": "system", "content": SYSTEM_INSTRUCTIONS},
+                        {"role": "user", "content": prompt},
+                    ],
+                    temperature=0.1,
+                ),
+                timeout=settings.graph_timeout_seconds,
+            )
+            content = response.choices[0].message.content
+            return content.strip() if content else _deterministic_answer(question, evidence, research_summary)
+
+        if provider == "openai" and settings.openai_api_key:
+            client = AsyncOpenAI(api_key=settings.openai_api_key)
+            response = await asyncio.wait_for(
+                client.responses.create(
+                    model=settings.llm_model,
+                    instructions=SYSTEM_INSTRUCTIONS,
+                    input=prompt,
+                    store=False,
+                ),
+                timeout=settings.graph_timeout_seconds,
+            )
+            return str(response.output_text).strip()
+    except (TimeoutError, OpenAIError):
+        logger.exception("LLM provider '%s' failed; using deterministic grounded synthesis", provider)
+
+    return _deterministic_answer(question, evidence, research_summary)

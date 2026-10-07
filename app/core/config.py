@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     memory_max_messages: int = 20
     llm_provider: str = "deterministic"
     llm_model: str = "gpt-5-mini"
+    llm_base_url: str = ""
+    llm_api_key: str = ""
     embedding_model: str = "text-embedding-3-small"
     embedding_dimensions: int = 1536
     openai_api_key: str = ""

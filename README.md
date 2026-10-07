@@ -53,7 +53,26 @@ The API stream emits a typed event after each completed node. The UI renders tho
 
 ## Configuration profiles
 
-The default profile is credential-free and uses deterministic grounded synthesis plus a local learned-shape fallback vector and true BM25 scoring. For the evaluated integration profile:
+The default profile is credential-free and uses deterministic grounded synthesis plus a local learned-shape fallback vector and true BM25 scoring.
+
+For local generation through Ollama, install and start the model, then select the Ollama provider:
+
+```powershell
+ollama pull qwen3:4b-instruct
+ollama serve
+```
+
+```env
+LLM_PROVIDER=ollama
+LLM_MODEL=qwen3:4b-instruct
+LLM_BASE_URL=http://127.0.0.1:11434/v1/
+LLM_API_KEY=ollama
+GRAPH_TIMEOUT_SECONDS=120
+```
+
+When the API runs in Docker and Ollama runs on the Windows host, set `LLM_BASE_URL=http://host.docker.internal:11434/v1/`.
+
+For the hosted OpenAI integration profile:
 
 ```env
 LLM_PROVIDER=openai
